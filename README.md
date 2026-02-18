@@ -1,29 +1,33 @@
-# 🚀 AutoZyro - Ultimate Arch Gaming Experience
+# 🚀 AutoZyro – Ultimate Arch Gaming Setup
 
-**AutoZyro** is an advanced, all-in-one setup script designed to transform a fresh Arch Linux installation into a powerhouse for gaming, AI development, and daily productivity.
+**AutoZyro** is a modern, interactive bash script that turns a fresh Arch Linux install into a high-performance gaming machine in minutes – with smart defaults, automatic GPU detection, and a clean hybrid memory setup.
 
 [![Arch Linux](https://img.shields.io/badge/Arch%20Linux-Success?style=for-the-badge&logo=arch-linux&logoColor=white&color=1793D1)](https://archlinux.org)
-[![Licence](https://img.shields.io/badge/License-MIT-Success?style=for-the-badge&color=yellow)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 ---
 
-## ✨ Key Features
+## ✨ Why AutoZyro?
 
-### 🎮 Gaming & Performance
-- **Linux Zen Kernel**: Automatically installs and configures the Zen kernel for superior frame rates and system responsiveness.
-- **GPU Auto-Detection**: Intellectually detects your hardware (NVIDIA, AMD, or Intel) and installs the perfect driver stack.
-- **GameCore Suite**: Installs Steam, Prism Launcher (Minecraft), Heroic Games Launcher, GameMode, MangoHud, and GameScope.
-- **Memory Mastery**: Configures **8GB zRAM** for fast processing and a **16GB Swapfile** to prevent crashes during heavy modding sessions.
+Manual Arch gaming setup takes hours of reading the wiki.  
+AutoZyro does it in one run with:
 
-### 🎥 Multimedia & Sound
-- **High-Fidelity Audio**: Full Pipewire setup with **Bit-Perfect Playback** (up to 192kHz) and EasyEffects for system-wide EQ.
-- **Codecs Galore**: All essential GStreamer and FFmpeg codecs for a flawless YouTube and streaming experience.
-- **Vivaldi Browser**: Premium web experience with hardware-accelerated video support.
+- **Automatic GPU detection** (NVIDIA / AMD / Intel) + optimal drivers  
+- **Interactive menu**: choose **Full** or **Minimal** mode + yay/paru  
+- **Hybrid memory**: **8 GB zRAM** (high priority) + **16 GB swapfile** (backup)  
+- **Wayland-ready NVIDIA config** (fbdev=1, modeset=1)  
+- **Full Pipewire audio stack** + EasyEffects-ready  
+- **Zen kernel option**, gamemode, mangohud, gamescope, ProtonUp-Qt, etc.
 
-### 🛠️ Hardware & System
-- **NVIDIA Pro Config**: Implements "No-Tearing" (ForceFullCompositionPipeline) and DKMS support to ensure your drivers never break.
-- **Peripheral Support**: Out-of-the-box support for **Bluetooth** and **PS4/DualSense Controllers** (ds4drv + udev rules).
-- **Auto-Housekeeping**: Weekly cache cleaning via `paccache` to keep your drive from filling up.
+---
+
+## 📋 Requirements
+
+- **Clean Arch Linux install** (preferably after `archinstall` – minimal or gaming profile)  
+- **Working internet connection** (~2–8 GB download depending on mode)  
+- **User with sudo privileges** (no root password required during run)  
+- **At least 16 GB RAM recommended** (32 GB+ ideal)  
+- **SSD/NVMe drive** (zRAM + swapfile perform best on fast storage)
 
 ---
 
@@ -40,33 +44,31 @@ chmod +x AutoZyro.sh
 
 ---
 
-## 📦 What's Included?
+## 📦 Feature Comparison
 
-| Category | Components |
-| :--- | :--- |
-| **Kernel** | `linux-zen`, `linux-zen-headers` |
-| **Drivers** | `nvidia-dkms` (AI/Gaming tuned), `amdgpu`, `vulkan-intel` |
-| **Browsers** | `Vivaldi`, `Discord` |
-| **Launchers** | `Steam`, `Prism Launcher`, `Heroic Games Launcher` |
-| **Tools** | `ProtonUp-Qt`, `MangoHud`, `GameScope`, `EasyEffects` |
-| **Java** | `Adoptium (Temurin) 17, 21, 25` |
+| Feature | Full Mode | Minimal Mode |
+| :--- | :---: | :---: |
+| **GPU Drivers & Kernel Tweaks** | ✅ | ✅ |
+| **Steam & Gaming Tools** | ✅ | ✅ |
+| **zRAM & Swap Optimization** | ✅ | ✅ |
+| **ZSH + Pure Prompt** | ✅ | ❌ |
+| **Vivaldi & Discord** | ✅ | ❌ |
+| **Java 17 & 21 (Temurin)** | ✅ | ❌ |
+| **CUDA & cuDNN (NVIDIA)** | ✅ | ❌ |
 
 ---
 
-## ⚙️ Advanced Optimizations
+## 💡 Pro Tips
 
-AutoZyro doesn't just install apps; it tunes your OS:
-- **vm.max_map_count**: Boosted to `2147483642` for massive open-world games.
-- **Power Modes**: Integrated `power-profiles-daemon` for maximum CPU performance.
-- **X11 NVIDIA Tweak**: Zero screen-tearing configuration.
-- **ZRAM**: Dynamic compression with `zstd` algorithm.
+1. **GE-Proton**: Use the pre-installed **ProtonUp-Qt** to download the latest GE-Proton for Steam.
+2. **Performance HUD**: Use `MANGOHUD=1 %command%` in Steam to see your stats.
+3. **Audio EQ**: Open **EasyEffects** (available in Full mode) to configure mic noise suppression.
+4. **Wayland**: NVIDIA enthusiasts can check `cat /sys/module/nvidia_drm/parameters/fbdev` (should be `Y`).
 
 ---
 
 ## 🤝 Contributing
 
-Feel free to fork, open issues, and submit PRs to make the Arch Gaming experience even better for everyone!
-
----
+Feel free to fork, open issues, and submit PRs to keep AutoZyro the #1 choice for Arch Gamers!
 
 Developed with ❤️ for the Arch Community.
