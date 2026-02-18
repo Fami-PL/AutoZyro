@@ -538,9 +538,11 @@ echo -e "  5. For better in-game audio → set PipeWire quantum to ${CYAN}1024/4
 echo -e "  6. For NVIDIA + Wayland → check fbdev status: ${CYAN}cat /sys/module/nvidia_drm/parameters/fbdev${NC} (Y = enabled)"
 echo -e "  7. GameMode is already enabled → add ${CYAN}gamemoderun %command%${NC} in Steam Launch Options."
 
-# --- 9. Installation Verification ---
+# --- 9. Installation Verification & Repair ---
 echo -e "\n${YELLOW}${BOLD}POST-INSTALLATION VERIFICATION${NC}"
 echo -e "${YELLOW}Verifying installation (this may take a few seconds)...${NC}"
+
+FAILED_PKGS=()
 
 verify_pkg() {
     local pkg="$1"
@@ -548,8 +550,11 @@ verify_pkg() {
 
     if pacman -Qs "$pkg" &>/dev/null || ( [[ -n "$cmd" ]] && command -v "$cmd" &>/dev/null ); then
         echo -e "  [${GREEN}OK${NC}] $pkg"
+        return 0
     else
         echo -e "  [${RED}MISSING${NC}] $pkg"
+        FAILED_PKGS+=("$pkg")
+        return 1
     fi
 }
 
@@ -589,6 +594,29 @@ case $GPU_TYPE in
         verify_pkg "intel-media-driver"
         ;;
 esac
+
+# --- Repair Logic ---
+if [ ${#FAILED_PKGS[@]} -ne 0 ]; then
+    echo -e "\n${YELLOW}${BOLD}REPAIR NEEDED${NC}"
+    warn "The following packages failed to install: ${FAILED_PKGS[*]}"
+    read -p "[AutoZyro] Would you like to attempt to repair/re-install them? (y/N): " repair_choice
+    
+    if [[ "$repair_choice" =~ ^[Yy]$ ]]; then
+        for pkg in "${FAILED_PKGS[@]}"; do
+            info "Attempting to fix: $pkg..."
+            # Try AUR helper first for -bin packages, Pacman for others
+            if [[ "$pkg" == *"-bin"* ]]; then
+                $AUR_HELPER -S --needed --noconfirm "$pkg" || \
+                $AUR_HELPER -S --needed --noconfirm "${pkg%-bin}" || \
+                sudo pacman -S --needed --noconfirm "${pkg%-bin}"
+            else
+                sudo pacman -S --needed --noconfirm "$pkg" || \
+                $AUR_HELPER -S --needed --noconfirm "$pkg"
+            fi
+        done
+        success "Repair stage finished. Please check the logs above for any remaining errors."
+    fi
+fi
 
 # --- Final System Update ---
 info "Running final full system update..."
