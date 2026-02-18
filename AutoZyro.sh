@@ -141,12 +141,10 @@ install_nvidia() {
         nvidia-dkms \
         nvidia-utils \
         lib32-nvidia-utils \
-        nvidia-settings
+        nvidia-settings \
+        nvtop
 
-    if [[ "$MINIMAL" == false ]]; then
-        info "Installing CUDA and cuDNN (AI/ML support)..."
-        sudo pacman -S --needed --noconfirm cuda cudnn
-    fi
+    # CUDA removed from here - moved to interactive prompt after Java
 
     info "Configuring Kernel Modules for NVIDIA (Wayland compatible)..."
     # Essential modules
@@ -195,7 +193,8 @@ install_amd() {
         libva-mesa-driver \
         lib32-libva-mesa-driver \
         mesa-vdpau \
-        lib32-mesa-vdpau
+        lib32-mesa-vdpau \
+        radeontop
     success "AMD setup completed."
 }
 
@@ -217,7 +216,7 @@ if grep -q "^\[multilib\]" /etc/pacman.conf; then
 else
     info "Enabling multilib repository..."
     sudo sed -i '/#\[multilib\]/,/#Include = \/etc\/pacman.d\/mirrorlist/ s/#//' /etc/pacman.conf
-    sudo pacman -Sy
+    sudo pacman -Syu --noconfirm
     success "Multilib enabled."
 fi
 
@@ -265,7 +264,10 @@ sudo pacman -S --needed --noconfirm \
     zsh zsh-autosuggestions zsh-syntax-highlighting \
     lib32-gcc-libs lib32-glibc lib32-libx11 lib32-mesa lib32-vulkan-icd-loader \
     libva-mesa-driver lib32-libva-mesa-driver \
-    wget curl unzip rsync
+    wget curl unzip rsync \
+    fastfetch btop htop vulkan-tools \
+    vulkan-icd-loader lib32-vulkan-icd-loader \
+    vulkan-validation-layers vulkan-mesa-layers
 
 # Enable Housekeeping & Power Mode
 info "Enabling Housekeeping (paccache) and Power Management..."
@@ -352,6 +354,20 @@ AUR_PACKAGES=("protonup-qt-bin" "game-devices-udev")
 
 if [[ "$MINIMAL" == false ]]; then
     AUR_PACKAGES+=("prismlauncher-bin" "heroic-games-launcher-bin" "vivaldi" "vivaldi-ffmpeg-codecs" "discord")
+    
+    # DE-Aware GUI Installation
+    if [[ "$XDG_CURRENT_DESKTOP" == "KDE" ]] || [[ "$XDG_SESSION_DESKTOP" == "KDE" ]]; then
+        info "KDE Plasma detected. Installing optimized GUI tools..."
+        sudo pacman -S --needed --noconfirm \
+            konsole dolphin discover plasma-browser-integration ark spectacle kate
+    else
+        warn "Non-KDE environment or TTY detected ($XDG_CURRENT_DESKTOP)."
+        read -p "[AutoZyro] Environment is not KDE. Still install KDE suite (Dolphin, Konsole, etc.)? (y/N): " kde_choice
+        if [[ "$kde_choice" =~ ^[Yy]$ ]]; then
+            sudo pacman -S --needed --noconfirm \
+                konsole dolphin discover plasma-browser-integration ark spectacle kate
+        fi
+    fi
 fi
 
 $AUR_HELPER -S --needed "${AUR_PACKAGES[@]}"
@@ -360,6 +376,18 @@ $AUR_HELPER -S --needed "${AUR_PACKAGES[@]}"
 if [[ "$MINIMAL" == false ]]; then
     info "Installing Adoptium Java 17 and 21..."
     $AUR_HELPER -S --needed jdk17-temurin jdk21-temurin
+fi
+
+# --- 7.2 Optional CUDA for NVIDIA (Full Mode) ---
+if [[ "$MINIMAL" == false ]] && [[ "$GPU_TYPE" == "nvidia" ]]; then
+    echo -e "\n${YELLOW}${BOLD}AI/ML SUPPORT (NVIDIA CUDA)${NC}"
+    read -p "[AutoZyro] Install CUDA + cuDNN? (Needed for AI/ML, consumes ~2-3 GB) (y/N): " cuda_q
+    if [[ "$cuda_q" =~ ^[Yy]$ ]]; then
+        sudo pacman -S --needed --noconfirm cuda cudnn
+        success "CUDA + cuDNN installed."
+    else
+        info "Skipping CUDA installation."
+    fi
 fi
 
 # --- 8. Configuration & Optimizations ---
@@ -475,6 +503,9 @@ echo -e "  - ${CYAN}Vivaldi${NC} (Premium Browser)"
 echo -e "  - ${CYAN}Discord${NC} (Community Hub)"
 echo -e "  - ${CYAN}Java 17 and 21 (Temurin)${NC}"
 echo -e "  - ${CYAN}Drivers${NC} (Auto-optimized for $GPU_TYPE)"
+echo -e "  - ${CYAN}Konsole + Dolphin + Discover${NC} (KDE Suite)"
+echo -e "  - ${CYAN}fastfetch, btop, htop${NC} (Modern monitoring)"
+echo -e "  - ${CYAN}Vulkan Tools${NC} (vulkaninfo, vkcube, etc.)"
 echo -e "\n${BOLD}Gaming Tweaks:${NC}"
 echo -e "  - ${CYAN}GameMode${NC} enabled"
 echo -e "  - ${CYAN}MangoHud${NC} installed"
@@ -506,6 +537,58 @@ echo -e "  4. Configure your EQ and mic noise suppression in ${CYAN}EasyEffects$
 echo -e "  5. For better in-game audio → set PipeWire quantum to ${CYAN}1024/48000${NC} in EasyEffects."
 echo -e "  6. For NVIDIA + Wayland → check fbdev status: ${CYAN}cat /sys/module/nvidia_drm/parameters/fbdev${NC} (Y = enabled)"
 echo -e "  7. GameMode is already enabled → add ${CYAN}gamemoderun %command%${NC} in Steam Launch Options."
+
+# --- 9. Installation Verification ---
+echo -e "\n${YELLOW}${BOLD}POST-INSTALLATION VERIFICATION${NC}"
+echo -e "${YELLOW}Verifying installation (this may take a few seconds)...${NC}"
+
+verify_pkg() {
+    local pkg="$1"
+    local cmd="$2"  # Optional command to check
+
+    if pacman -Qs "$pkg" &>/dev/null || ( [[ -n "$cmd" ]] && command -v "$cmd" &>/dev/null ); then
+        echo -e "  [${GREEN}OK${NC}] $pkg"
+    else
+        echo -e "  [${RED}MISSING${NC}] $pkg"
+    fi
+}
+
+info "Checking essential components..."
+verify_pkg "steam"
+verify_pkg "gamemode" "gamemoded"
+verify_pkg "mangohud"
+verify_pkg "gamescope"
+verify_pkg "wine-staging" "wine"
+verify_pkg "flatpak"
+verify_pkg "pipewire"
+verify_pkg "bluez"
+
+if [[ "$MINIMAL" == false ]]; then
+    info "Checking extra applications..."
+    verify_pkg "prismlauncher-bin" "prismlauncher"
+    verify_pkg "heroic-games-launcher-bin" "heroic"
+    verify_pkg "vivaldi"
+    verify_pkg "discord"
+    verify_pkg "jdk17-temurin" "java"
+    verify_pkg "jdk21-temurin" "java"
+    verify_pkg "zsh-pure-prompt" "zsh"
+fi
+
+info "Checking hardware drivers ($GPU_TYPE)..."
+case $GPU_TYPE in
+    "nvidia")
+        verify_pkg "nvidia-utils"
+        verify_pkg "nvidia-dkms"
+        ;;
+    "amd")
+        verify_pkg "vulkan-radeon"
+        verify_pkg "xf86-video-amdgpu"
+        ;;
+    "intel")
+        verify_pkg "vulkan-intel"
+        verify_pkg "intel-media-driver"
+        ;;
+esac
 
 # --- Final System Update ---
 info "Running final full system update..."
