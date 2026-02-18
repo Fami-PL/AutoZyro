@@ -460,7 +460,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable systemd-zram-setup@zram0.service || true
 success "zram 8 GB enabled (zstd, priority 100)."
 
-# swapfile 16 GB – zawsze jako backup
+# swapfile 16 GB – always as backup
 if [[ ! -f /swapfile ]]; then
     info "Creating 16 GB swapfile..."
     sudo truncate -s 0 /swapfile
@@ -479,7 +479,7 @@ else
     info "Swapfile already exists."
 fi
 
-# Swappiness – wyższy dla zram-heavy setupów
+# Swappiness – higher for zram-heavy setups
 echo "vm.swappiness = 140" | sudo tee /etc/sysctl.d/99-zram-swap.conf
 sudo sysctl --system
 info "vm.swappiness=140 (good for zram priority)."
